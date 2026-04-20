@@ -21,9 +21,6 @@ CREATE TABLE processos (
 USE advocacia;
 
 INSERT INTO clientes (nome, cpf) VALUES
-('Cesar Filho', '029.211.920-80'),
-('Paulo Sexto', '125.242.724-78'),
-('Jose Etelvino', '109.520.564-10');
 INSERT INTO processos (numero_processo, tipo_acao, status, data_protocolo, cliente_id) VALUES
 ('8492384298492849284820842', 'Trabalhista', 'Em andamento', '2026-04-29', 1),
 ('123456789101112131415', 'Trabalhista', 'Concluído', '2026-04-14', 2),
