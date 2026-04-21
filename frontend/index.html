@@ -1,66 +1,122 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Sistema Jurídico</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Processos - Advocacia</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-    <!-- HEADER -->
-    <header>
-        <h1>Sistema de Processos Jurídicos</h1>
+  <main class="container">
+    <header class="page-header card">
+      <h1>Controle de Processos</h1>
+      <p>Cadastro, filtro e listagem de processos jurídicos</p>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main>
+    <section class="card">
+      <h2>Cadastro / Edição de Processo</h2>
+      <form id="processoForm" class="form-grid">
+        <div class="campo">
+          <label for="numeroProcesso">Número do processo</label>
+          <input type="text" id="numeroProcesso" name="numeroProcesso" />
+        </div>
 
-        <!-- SEÇÃO DE CADASTRO -->
-        <section id="cadastro">
-            <h2>Cadastrar Processo</h2>
+        <div class="campo">
+          <label for="nomeCliente">Nome do cliente</label>
+          <input type="text" id="nomeCliente" name="nomeCliente" />
+        </div>
 
-            <div class="form-group">
-                <label for="nome">Cliente</label>
-                <input type="text" id="nome" placeholder="Nome do cliente">
-            </div>
+        <div class="campo">
+          <label for="cpfCliente">CPF</label>
+          <input type="text" id="cpfCliente" name="cpfCliente" placeholder="000.000.000-00" />
+        </div>
 
-            <div class="form-group">
-                <label for="cpf">CPF</label>
-                <input type="text" id="cpf" placeholder="CPF">
-            </div>
+        <div class="campo">
+          <label for="tipoAcao">Tipo de ação</label>
+          <input type="text" id="tipoAcao" name="tipoAcao" />
+        </div>
 
-            <div class="form-group">
-                <label for="tipo">Tipo de Ação</label>
-                <input type="text" id="tipo" placeholder="Ex: Trabalhista">
-            </div>
+        <div class="campo">
+          <label for="statusProcesso">Status</label>
+          <select id="statusProcesso" name="statusProcesso">
+            <option value="pendente">Pendente</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="arquivado">Arquivado</option>
+          </select>
+        </div>
 
-            <button id="btn-cadastrar">Cadastrar</button>
-        </section>
+        <div class="campo">
+          <label for="dataProtocolo">Data de protocolo</label>
+          <input type="date" id="dataProtocolo" name="dataProtocolo" />
+        </div>
 
-        <!-- SEÇÃO DA TABELA -->
-        <section id="tabela-processos">
-            <h2>Processos</h2>
+        <div class="campo campo-full">
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" name="descricao" rows="4"></textarea>
+        </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nº Processo</th>
-                        <th>Cliente</th>
-                        <th>CPF</th>
-                        <th>Tipo</th>
-                        <th>Status</th>
-                        <th>Data</th>
-                    </tr>
-                </thead>
+        <div class="campo campo-full">
+          <label for="fotoCliente">Foto do cliente</label>
+          <input type="file" id="fotoCliente" name="fotoCliente" accept=".jpg,.jpeg,.png" />
+        </div>
 
-                <tbody id="corpo-tabela">
-                    <!-- Dados vão ser inseridos aqui via JS -->
-                </tbody>
-            </table>
-        </section>
+        <div class="acoes-form campo-full">
+          <button type="submit" id="btnSalvar">Salvar</button>
+        </div>
+      </form>
+    </section>
 
-    </main>
+    <section class="card">
+      <h2>Filtros</h2>
+      <div class="filtros-grid">
+        <div class="campo">
+          <label for="filtroBusca">Busca (nome, CPF ou nº processo)</label>
+          <input type="text" id="filtroBusca" name="filtroBusca" />
+        </div>
 
-    <script src="script.js"></script>
+        <div class="campo">
+          <label for="filtroStatus">Status</label>
+          <select id="filtroStatus" name="filtroStatus">
+            <option value="">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="arquivado">Arquivado</option>
+          </select>
+        </div>
+
+        <div class="acoes-filtro">
+          <button type="button" id="btnLimparFiltros">Limpar filtros</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Listagem de Processos</h2>
+      <div class="tabela-wrapper">
+        <table id="tabelaProcessos">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Cliente</th>
+              <th>CPF</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Protocolo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabela">
+            <!-- Linhas serão adicionadas via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="script.js"></script>
 </body>
 </html>
