@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Filtros</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+  <main class="container">
+
+    <header class="page-header card">
+      <h1>Filtros</h1>
+      <p>Filtrar processos cadastrados</p>
+    </header>
+
+    <section class="card">
+      <h2>Filtros</h2>
+
+      <div class="form-grid">
+        <div class="campo">
+          <label for="filtroBusca">Busca</label>
+          <input type="text" id="filtroBusca" name="filtroBusca">
+        </div>
+
+        <div class="campo">
+          <label for="filtroStatus">Status</label>
+          <select id="filtroStatus" name="filtroStatus">
+            <option value="">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="arquivado">Arquivado</option>
+          </select>
+        </div>
+
+        <div class="acoes-form campo-full">
+          <button type="button" id="btnLimparFiltros">Limpar filtros</button>
+        </div>
+      </div>
+      <a href="../index.html" class="button-Return-Filters">
+      <img src="../imgs/return_blue_arrow.png" alt="Voltar">
+      </a>
+  </main>
+</body>
+</html>

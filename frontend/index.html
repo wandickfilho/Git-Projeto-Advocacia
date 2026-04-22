@@ -14,7 +14,7 @@
     </header>
 
     <section class="card">
-      <h2>Cadastro / Edição de Processo</h2>
+      <h2>Cadastro</h2>
       <form id="processoForm" class="form-grid">
         <div class="campo">
           <label for="numeroProcesso">Número do processo</label>
@@ -25,7 +25,10 @@
           <label for="nomeCliente">Nome do cliente</label>
           <input type="text" id="nomeCliente" name="nomeCliente" />
         </div>
-
+        <div class="campo">
+          <label for="senhaGov">Senha Gov</label>
+          <input type="text" id="nomeCliente" name="govCliente" />
+        </div>
         <div class="campo">
           <label for="cpfCliente">CPF</label>
           <input type="text" id="cpfCliente" name="cpfCliente" placeholder="000.000.000-00" />
@@ -60,63 +63,32 @@
           <label for="fotoCliente">Foto do cliente</label>
           <input type="file" id="fotoCliente" name="fotoCliente" accept=".jpg,.jpeg,.png" />
         </div>
+        <div class="campo campo-full">
+          <label for="docCliente">Documentos do cliente</label>
+          <input type="file" id="docCliente" name="docCliente" accept=".pdf,.docx,.doc,.txt" />
+        </div>
 
         <div class="acoes-form campo-full">
           <button type="submit" id="btnSalvar">Salvar</button>
         </div>
       </form>
-    </section>
-
-    <section class="card">
-      <h2>Filtros</h2>
-      <div class="filtros-grid">
-        <div class="campo">
-          <label for="filtroBusca">Busca (nome, CPF ou nº processo)</label>
-          <input type="text" id="filtroBusca" name="filtroBusca" />
-        </div>
-
-        <div class="campo">
-          <label for="filtroStatus">Status</label>
-          <select id="filtroStatus" name="filtroStatus">
-            <option value="">Todos</option>
-            <option value="pendente">Pendente</option>
-            <option value="em_andamento">Em andamento</option>
-            <option value="concluido">Concluído</option>
-            <option value="arquivado">Arquivado</option>
-          </select>
-        </div>
-
-        <div class="acoes-filtro">
-          <button type="button" id="btnLimparFiltros">Limpar filtros</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Listagem de Processos</h2>
-      <div class="tabela-wrapper">
-        <table id="tabelaProcessos">
-          <thead>
-            <tr>
-              <th>Número</th>
-              <th>Cliente</th>
-              <th>CPF</th>
-              <th>Tipo</th>
-              <th>Status</th>
-              <th>Protocolo</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="corpoTabela">
-            <!-- Linhas serão adicionadas via JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <div class="links-navegacao">
+      <a href="Pages/Filtros.html" class="button-Filters">Filtros</a>
+      <a href="Pages/Listagens.html" class="button-Listens">Listagens</a>
+    </div>
   </main>
 
   <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
   <script src="script.js"></script>
+<div id="cookie-banner">
+  <p>Usamos cookies para melhorar sua experiência.</p>
+  <button id="accept-cookies">Aceitar</button>
+  <button id="reject-cookies">Recusar</button>
+</div>
+
+<script src="js/script.js"></script>
+
+<script src="js/script.js"></script>
 </body>
 </html>

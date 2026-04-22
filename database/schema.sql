@@ -13,7 +13,7 @@ CREATE TABLE processos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     numero_processo VARCHAR(50) UNIQUE NOT NULL,
     tipo_acao VARCHAR(50),
-    status ENUM('Em andamento', 'Concluído', 'Arquivado') DEFAULT 'Em andamento',
+    status ENUM('Em andamento', 'Concluído', 'Arquivado', 'Pendente') DEFAULT 'Em andamento',
     data_protocolo DATE,
     cliente_id INT,
     FOREIGN KEY (cliente_id) REFERENCES clientes(id)
