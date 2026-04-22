@@ -22,8 +22,3 @@ USE advocacia;
 
 INSERT INTO clientes (nome, cpf) VALUES
 INSERT INTO processos (numero_processo, tipo_acao, status, data_protocolo, cliente_id) VALUES
-('8492384298492849284820842', 'Trabalhista', 'Em andamento', '2026-04-29', 1),
-('123456789101112131415', 'Trabalhista', 'Concluído', '2026-04-14', 2),
-('10987654321099876566', 'Civil', 'Concluído', '2026-04-14', 3),
-('8775324928471824714891', 'Criminal', 'Em andamento', '2026-04-14', 1),
-('758731943204920957839752', 'Civil', 'Arquivado', '2026-04-14', 2);
