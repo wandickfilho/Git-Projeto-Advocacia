@@ -24,94 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 });
-
-/* =========================
-   LOGIN / CADASTRO
-========================= */
-
-document.addEventListener("DOMContentLoaded", () => {
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-
-  // alternar telas (caso tenha botões)
-  window.showLogin = function () {
-    loginForm?.classList.remove("hidden");
-    registerForm?.classList.add("hidden");
-  };
-
-  window.showRegister = function () {
-    registerForm?.classList.remove("hidden");
-    loginForm?.classList.add("hidden");
-  };
-
-  /* =========================
-     CADASTRO
-  ========================= */
-  registerForm?.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    const inputs = registerForm.querySelectorAll("input");
-
-    const nome = inputs[0].value;
-    const email = inputs[1].value;
-    const senha = inputs[2].value;
-    const confirmar = inputs[3].value;
-
-    if (senha !== confirmar) {
-      alert("As senhas não coincidem!");
-      return;
-    }
-
-    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-
-    const existe = usuarios.find(u => u.email === email);
-
-    if (existe) {
-      alert("Esse email já está cadastrado!");
-      return;
-    }
-
-    usuarios.push({ nome, email, senha });
-
-    localStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-    alert("Cadastro realizado com sucesso!");
-
-    registerForm.reset();
-    showLogin();
-  });
-
-  /* =========================
-     LOGIN
-  ========================= */
-  loginForm?.addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    const inputs = loginForm.querySelectorAll("input");
-
-    const email = inputs[0].value;
-    const senha = inputs[1].value;
-
-    let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-
-    const user = usuarios.find(
-      u => u.email === email && u.senha === senha
-    );
-
-    if (!user) {
-      alert("Email ou senha incorretos!");
-      return;
-    }
-
-    localStorage.setItem("usuarioLogado", JSON.stringify(user));
-
-    alert(`Bem-vindo, ${user.nome}!`);
-
-    window.location.href = "index.html";
-  });
-});
 const cpfInput = document.getElementById("cpf");
-
 cpfInput.addEventListener("input", (e) => {
   let value = e.target.value;
 
@@ -144,4 +57,60 @@ processoInput.addEventListener("input", (e) => {
   value = value.replace(/^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2})(\d)/, "$1.$2");
 
   e.target.value = value;
+});
+document.getElementById("registerForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const inputs = e.target.querySelectorAll("input");
+
+  const nome = inputs[0].value;
+  const email = inputs[1].value;
+  const senha = inputs[2].value;
+  const confirmar = inputs[3].value;
+
+  if (senha !== confirmar) {
+    alert("As senhas não coincidem!");
+    return;
+  }
+
+  const res = await fetch("http://localhost:3000/auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ nome, email, senha })
+  });
+
+  const data = await res.json();
+
+  alert(data.message || "Cadastro realizado!");
+});
+document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const inputs = e.target.querySelectorAll("input");
+
+  const email = inputs[0].value;
+  const senha = inputs[1].value;
+
+  const res = await fetch("http://localhost:3000/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ email, senha })
+  });
+
+  const data = await res.json();
+
+  if (data.user) {
+    alert("Login realizado com sucesso!");
+
+    // guarda sessão (temporário)
+    localStorage.setItem("usuarioLogado", JSON.stringify(data.user));
+
+    window.location.href = "index.html";
+  } else {
+    alert(data.message || "Erro no login");
+  }
 });
