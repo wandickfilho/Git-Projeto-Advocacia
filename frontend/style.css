@@ -303,18 +303,80 @@ font: inherit;
 body {
   position: relative;
 }
+
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 200px;   /* tamanho da imagem */
+  height: 200px;  /* tamanho da imagem */
 
   background: url("imgs/logotipo2.png") no-repeat center;
-  background-size: 200px; /* controla o tamanho da imagem */
+  background-size: contain;
 
   opacity: 0.2;
   z-index: -1;
   pointer-events: none;
+}
+
+.auth-body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6fb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.auth-container {
+  text-align: center;
+}
+
+.auth-logo img {
+  width: 140px;
+  margin-bottom: 20px;
+}
+
+.auth-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  width: 320px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-form input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.auth-form button {
+  padding: 10px;
+  background: #1e5eff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.auth-link {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.auth-link a {
+  color: #1e5eff;
+  text-decoration: none;
+  font-weight: bold;
 }

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login - Advocacia</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Cadastro - Advocacia</title>
+  <link rel="stylesheet" href="../style.css" />
 </head>
 
 <body class="auth-body">
@@ -13,27 +13,29 @@
 
     <!-- LOGO -->
     <div class="auth-logo">
-      <img src="imgs/logotipo1.png" alt="Logo">
+      <img src="../imgs/logotipo1.png" alt="Logo">
     </div>
 
-    <!-- CARD LOGIN -->
+    <!-- CARD CADASTRO -->
     <div class="auth-card">
 
-      <h2>Entrar</h2>
+      <h2>Criar conta</h2>
 
-      <form id="loginForm" class="auth-form">
+      <form id="registerForm" class="auth-form">
 
+        <input type="text" placeholder="Nome completo" required />
         <input type="email" placeholder="Email" required />
         <input type="password" placeholder="Senha" required />
+        <input type="password" placeholder="Confirmar senha" required />
 
-        <button type="submit">Entrar</button>
+        <button type="submit">Cadastrar</button>
 
       </form>
 
-      <!-- BOTÃO PARA CADASTRO -->
+      <!-- VOLTAR LOGIN -->
       <p class="auth-link">
-        Não tem conta?
-        <a href="Pages/cadastro.html">Criar conta</a>
+        Já tem conta?
+        <a href="../index.html">Fazer login</a>
       </p>
 
     </div>
