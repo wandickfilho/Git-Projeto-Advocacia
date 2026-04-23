@@ -8,55 +8,89 @@
 </head>
 
 <body>
-  <main class="container">
 
-    <header class="page-header card">
-      <h1>Listagem de Processos</h1>
-      <p>Visualização dos processos cadastrados</p>
-    </header>
+<main class="container">
 
-    <!-- =========================
-         TABELA DE PROCESSOS
-    ========================== -->
-    <section class="card">
-      <h2>Processos</h2>
+  <header class="page-header card">
+    <h1>Listagem de Processos</h1>
+    <p>Visualização dos processos cadastrados</p>
+  </header>
 
-      <div class="tabela-wrapper">
-        <table id="tabelaProcessos">
+  <!-- 🔍 FILTROS -->
+  <section class="card">
+    <h2>Filtros</h2>
 
-          <thead>
-            <tr>
-              <th>Número</th>
-              <th>Cliente</th>
-              <th>CPF</th>
-              <th>Tipo</th>
-              <th>Status</th>
-              <th>Protocolo</th>
-            </tr>
-          </thead>
+    <input type="text" id="filtroBusca" placeholder="Buscar por número ou cliente">
 
-          <tbody id="corpoTabela">
-            <tr>
-              <td colspan="6">Carregando processos...</td>
-            </tr>
-          </tbody>
+    <select id="filtroStatus">
+      <option value="">Todos</option>
+      <option value="em andamento">Em andamento</option>
+      <option value="concluído">Concluído</option>
+      <option value="arquivado">Arquivado</option>
+      <option value="pendente">Pendente</option>
+    </select>
 
-        </table>
-      </div>
-    </section>
+    <button id="btnFiltrar">Filtrar</button>
+    <button id="btnLimparFiltros">Limpar</button>
+  </section>
 
-  </main>
+  <!-- 📋 TABELA -->
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Cliente</th>
+          <th>CPF</th>
+          <th>Tipo</th>
+          <th>Status</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
 
-  <!-- VOLTAR -->
-  <a href="controle.html" class="button-Return-Listens">
-    <img src="../imgs/return_blue_arrow.png" alt="Voltar">
-  </a>
+      <tbody id="corpoTabela"></tbody>
+    </table>
+  </section>
 
-  <!-- LOGO -->
-  <div class="logo-full">
-    <img src="../imgs/logotipo1.png" alt="Logo da Empresa">
+</main>
+
+<!-- ✏️ MODAL EDITAR -->
+<div id="modalEditar">
+
+  <div id="modalEditarContent">
+
+    <h3>Editar Processo</h3>
+
+    <input id="edit_numero" placeholder="Número processo">
+    <input id="edit_nome" placeholder="Nome cliente">
+    <input id="edit_cpf" placeholder="CPF">
+
+    <select id="edit_tipo">
+      <option value="Cível">Cível</option>
+      <option value="Criminal">Criminal</option>
+      <option value="Trabalhista">Trabalhista</option>
+    </select>
+
+    <select id="edit_status">
+      <option value="Em andamento">Em andamento</option>
+      <option value="Concluído">Concluído</option>
+      <option value="Arquivado">Arquivado</option>
+      <option value="Pendente">Pendente</option>
+    </select>
+
+    <input type="date" id="edit_data">
+
+    <div class="modal-actions">
+      <button onclick="salvarEdicao()">Salvar</button>
+      <button onclick="fecharModal()">Cancelar</button>
+    </div>
+
   </div>
 
-  <script src="../script.js"></script>
+</div>
+
+<script src="../script.js"></script>
+
 </body>
 </html>

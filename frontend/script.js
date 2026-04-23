@@ -3,21 +3,87 @@
 //////////////////////////////
 (() => {
   const path = window.location.pathname;
-  const isPrivatePage = ["controle.html", "listagens.html"].some(page =>
-    path.includes(page)
-  );
-
   const token = localStorage.getItem("token");
 
-  if (isPrivatePage && !token) {
+  const isPrivate = ["controle.html", "listagens.html"].some(p =>
+    path.includes(p)
+  );
+
+  if (isPrivate && !token) {
     window.location.href = "../index.html";
   }
 })();
 
 //////////////////////////////
-// 📦 CACHE GLOBAL
+// 📦 CACHE
 //////////////////////////////
 let processosCache = [];
+let idEditando = null;
+
+//////////////////////////////
+// 🔑 LOGIN
+//////////////////////////////
+document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
+
+  try {
+    const res = await fetch("http://localhost:3000/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, senha })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message);
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("usuario", JSON.stringify(data.user));
+
+    window.location.href = "Pages/controle.html";
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao conectar");
+  }
+});
+
+//////////////////////////////
+// 🧾 CADASTRO
+//////////////////////////////
+document.getElementById("registerForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const nome = document.getElementById("nome").value;
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
+
+  try {
+    const res = await fetch("http://localhost:3000/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome, email, senha })
+    });
+
+    const data = await res.json();
+
+    alert(data.message);
+
+    if (res.ok) {
+      window.location.href = "../index.html";
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao cadastrar");
+  }
+});
 
 //////////////////////////////
 // 📄 CARREGAR PROCESSOS
@@ -31,24 +97,26 @@ async function carregarProcessos() {
     }
   });
 
+  const data = await res.json();
+
   if (!res.ok) {
-    alert("Erro ao carregar processos");
+    console.log("Erro ao carregar processos");
     return;
   }
 
-  processosCache = await res.json();
-  renderizarProcessos(processosCache);
+  processosCache = data;
+  renderizarProcessos(data);
 }
 
 //////////////////////////////
-// 🧾 RENDER LISTA
+// 🧾 RENDER TABELA
 //////////////////////////////
 function renderizarProcessos(lista) {
   const tbody = document.getElementById("corpoTabela");
   if (!tbody) return;
 
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">Nenhum processo encontrado</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7">Nenhum processo</td></tr>`;
     return;
   }
 
@@ -59,13 +127,16 @@ function renderizarProcessos(lista) {
       <td>${p.cpf_cliente}</td>
       <td>${p.tipo_acao}</td>
       <td>${p.status_processo}</td>
-      <td>${p.data_protocolo}</td>
+      <td>${(p.data_protocolo || "").split("T")[0]}</td>
+      <td>
+        <button onclick="editarProcesso(${p.id || p.id_processo})">Editar</button>
+      </td>
     </tr>
   `).join("");
 }
 
 //////////////////////////////
-// 🚀 INICIALIZA LISTAGEM
+// 🚀 INIT
 //////////////////////////////
 if (document.getElementById("corpoTabela")) {
   carregarProcessos();
@@ -75,26 +146,14 @@ if (document.getElementById("corpoTabela")) {
 // 🔍 FILTRO
 //////////////////////////////
 document.getElementById("btnFiltrar")?.addEventListener("click", () => {
-  const busca = (document.getElementById("filtroBusca")?.value || "")
-    .toLowerCase()
-    .trim();
-
-  const status = (document.getElementById("filtroStatus")?.value || "")
-    .toLowerCase()
-    .trim();
+  const busca = document.getElementById("filtroBusca").value.toLowerCase();
+  const status = document.getElementById("filtroStatus").value.toLowerCase();
 
   const filtrados = processosCache.filter(p => {
-    const statusProcesso = (p.status_processo || "").toLowerCase().trim();
-    const nome = (p.nome_cliente || "").toLowerCase();
-    const numero = (p.numero_processo || "").toLowerCase();
-
-    const matchStatus = status ? statusProcesso === status : true;
-
-    const matchBusca = busca
-      ? numero.includes(busca) || nome.includes(busca)
-      : true;
-
-    return matchStatus && matchBusca;
+    return (
+      (!busca || p.nome_cliente.toLowerCase().includes(busca) || p.numero_processo.toLowerCase().includes(busca)) &&
+      (!status || p.status_processo.toLowerCase() === status)
+    );
   });
 
   renderizarProcessos(filtrados);
@@ -104,17 +163,13 @@ document.getElementById("btnFiltrar")?.addEventListener("click", () => {
 // 🧹 LIMPAR FILTRO
 //////////////////////////////
 document.getElementById("btnLimparFiltros")?.addEventListener("click", () => {
-  const busca = document.getElementById("filtroBusca");
-  const status = document.getElementById("filtroStatus");
-
-  if (busca) busca.value = "";
-  if (status) status.value = "";
-
+  document.getElementById("filtroBusca").value = "";
+  document.getElementById("filtroStatus").value = "";
   renderizarProcessos(processosCache);
 });
 
 //////////////////////////////
-// ⚖️ CADASTRO PROCESSO
+// ➕ CADASTRAR PROCESSO
 //////////////////////////////
 document.getElementById("processoForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -130,7 +185,7 @@ document.getElementById("processoForm")?.addEventListener("submit", async (e) =>
     status_processo: document.getElementById("status_processo").value,
     data_protocolo: document.getElementById("data_protocolo").value,
     descricao: document.getElementById("descricao").value,
-    adv_id: usuario.id
+    adv_id: usuario?.id
   };
 
   const res = await fetch("http://localhost:3000/processos", {
@@ -143,38 +198,102 @@ document.getElementById("processoForm")?.addEventListener("submit", async (e) =>
   });
 
   const data = await res.json();
-  alert(data.message || "Processo salvo com sucesso!");
+
+  alert(data.message);
 
   if (res.ok) {
     e.target.reset();
-    carregarProcessos(); // atualiza lista
+    carregarProcessos();
   }
 });
 
 //////////////////////////////
-// 📌 MÁSCARA CPF
+// ✏️ EDITAR PROCESSO
 //////////////////////////////
-document.getElementById("cpf_cliente")?.addEventListener("input", (e) => {
-  let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+function editarProcesso(id) {
+  const p = processosCache.find(x =>
+    x.id === id || x.id_processo === id || x.processo_id === id
+  );
 
-  v = v.replace(/(\d{3})(\d)/, "$1.$2");
-  v = v.replace(/(\d{3})(\d)/, "$1.$2");
-  v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  if (!p) return;
 
-  e.target.value = v;
+  idEditando = id;
+
+  document.getElementById("edit_numero").value = p.numero_processo || "";
+  document.getElementById("edit_nome").value = p.nome_cliente || "";
+  document.getElementById("edit_cpf").value = p.cpf_cliente || "";
+  document.getElementById("edit_tipo").value = p.tipo_acao || "";
+  document.getElementById("edit_status").value = p.status_processo || "";
+  document.getElementById("edit_data").value = (p.data_protocolo || "").split("T")[0];
+
+  document.getElementById("modalEditar").style.display = "flex";
+}
+
+//////////////////////////////
+// 💾 SALVAR EDIÇÃO
+//////////////////////////////
+async function salvarEdicao() {
+  const token = localStorage.getItem("token");
+
+  const payload = {
+    numero_processo: document.getElementById("edit_numero").value,
+    nome_cliente: document.getElementById("edit_nome").value,
+    cpf_cliente: document.getElementById("edit_cpf").value,
+    tipo_acao: document.getElementById("edit_tipo").value,
+    status_processo: document.getElementById("edit_status").value,
+    data_protocolo: document.getElementById("edit_data").value
+  };
+
+  const res = await fetch(`http://localhost:3000/processos/${idEditando}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  alert(data.message);
+
+  fecharModal();
+  carregarProcessos();
+}
+
+function fecharModal() {
+  document.getElementById("modalEditar").style.display = "none";
+  idEditando = null;
+}
+const cpfInput = document.getElementById("cpf_cliente") || document.getElementById("edit_cpf");
+
+cpfInput?.addEventListener("input", (e) => {
+  let value = e.target.value.replace(/\D/g, "");
+
+  value = value.slice(0, 11);
+
+  value = value
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+
+  e.target.value = value;
 });
+const processoInput =
+  document.getElementById("numero_processo") ||
+  document.getElementById("edit_numero");
 
-//////////////////////////////
-// 📌 MÁSCARA PROCESSO CNJ
-//////////////////////////////
-document.getElementById("numero_processo")?.addEventListener("input", (e) => {
-  let v = e.target.value.replace(/\D/g, "").slice(0, 20);
+processoInput?.addEventListener("input", (e) => {
+  let value = e.target.value.replace(/\D/g, "");
 
-  v = v.replace(/^(\d{7})(\d)/, "$1-$2");
-  v = v.replace(/^(\d{7}-\d{2})(\d)/, "$1.$2");
-  v = v.replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2");
-  v = v.replace(/^(\d{7}-\d{2}\.\d{4}\.\d{1})(\d)/, "$1.$2");
-  v = v.replace(/^(\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2})(\d)/, "$1.$2");
+  value = value.slice(0, 20);
 
-  e.target.value = v;
+  value = value
+    .replace(/^(\d{7})(\d)/, "$1-$2")
+    .replace(/^(\d{7}-\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2")
+    .replace(/^(\d{7}-\d{2}\.\d{4}\.\d)(\d)/, "$1.$2")
+    .replace(/^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2})(\d+)/, "$1.$2");
+
+  e.target.value = value;
 });

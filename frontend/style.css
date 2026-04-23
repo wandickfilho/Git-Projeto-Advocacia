@@ -388,3 +388,63 @@ body::before {
   text-decoration: none;
   font-weight: bold;
 }
+/* ============================= */
+/* ✏️ MODAL DE EDIÇÃO (CORRIGIDO)
+/* ============================= */
+
+
+#modalEditar {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+}
+
+#modalEditar.active {
+  display: flex;
+}
+
+#modalEditarContent {
+  width: 420px;
+  max-width: 92%;
+
+  background: #fff;
+  border-radius: 16px;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+
+  animation: pop 0.2s ease;
+}
+
+#modalEditarContent input,
+#modalEditarContent select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modal-actions button {
+  flex: 1;
+}
+
+@keyframes pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

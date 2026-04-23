@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -7,7 +8,6 @@ const auth = require("../middleware/auth");
 //////////////////////////////
 // 📌 CRIAR PROCESSO
 //////////////////////////////
-
 router.post("/", auth, (req, res) => {
   const {
     numero_processo,
@@ -48,19 +48,72 @@ router.post("/", auth, (req, res) => {
 //////////////////////////////
 // 📌 LISTAR PROCESSOS
 //////////////////////////////
-
 router.get("/", auth, (req, res) => {
   db.query(
     `SELECT * FROM processos ORDER BY id_processo DESC`,
     (err, results) => {
       if (err) {
-        console.error("❌ ERRO SQL:", err);
+        console.error("ERRO SQL:", err);
         return res.status(500).json({
           message: "Erro ao buscar processos"
         });
       }
 
       res.json(results);
+    }
+  );
+});
+
+//////////////////////////////
+// ✏️ ATUALIZAR PROCESSO (FALTAVA ISSO)
+//////////////////////////////
+router.put("/:id", auth, (req, res) => {
+  const { id } = req.params;
+
+  const {
+    numero_processo,
+    nome_cliente,
+    cpf_cliente,
+    tipo_acao,
+    status_processo,
+    data_protocolo
+  } = req.body;
+
+  db.query(
+    `UPDATE processos SET
+      numero_processo = ?,
+      nome_cliente = ?,
+      cpf_cliente = ?,
+      tipo_acao = ?,
+      status_processo = ?,
+      data_protocolo = ?
+     WHERE id_processo = ?`,
+    [
+      numero_processo,
+      nome_cliente,
+      cpf_cliente,
+      tipo_acao,
+      status_processo,
+      data_protocolo,
+      id
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("ERRO SQL UPDATE:", err);
+        return res.status(500).json({
+          message: "Erro ao atualizar processo"
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          message: "Processo não encontrado"
+        });
+      }
+
+      res.json({
+        message: "Processo atualizado com sucesso"
+      });
     }
   );
 });
