@@ -1,5 +1,5 @@
 //localStorage.removeItem("cookieChoice");
-
+console.log("SCRIPT CARREGOU");
 document.addEventListener("DOMContentLoaded", () => {
   const banner = document.getElementById("cookie-banner");
 
@@ -25,42 +25,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 const cpfInput = document.getElementById("cpf");
-cpfInput.addEventListener("input", (e) => {
-  let value = e.target.value;
 
-  // remove tudo que não for número
-  value = value.replace(/\D/g, "");
+if (cpfInput) {
+  cpfInput.addEventListener("input", (e) => {
+    let value = e.target.value;
 
-  // aplica máscara
-  value = value.replace(/(\d{3})(\d)/, "$1.$2");
-  value = value.replace(/(\d{3})(\d)/, "$1.$2");
-  value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    value = value.replace(/\D/g, "");
+    value = value.replace(/(\d{3})(\d)/, "$1.$2");
+    value = value.replace(/(\d{3})(\d)/, "$1.$2");
+    value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 
-  e.target.value = value;
-});
+    e.target.value = value;
+  });
+}
 const processoInput = document.getElementById("processo");
 
-processoInput.addEventListener("input", (e) => {
-  let value = e.target.value;
+if (processoInput) {
+  processoInput.addEventListener("input", (e) => {
+    let value = e.target.value;
 
-  // remove tudo que não for número
-  value = value.replace(/\D/g, "");
+    value = value.replace(/\D/g, "");
+    value = value.slice(0, 20);
 
-  // limita a 20 dígitos
-  value = value.slice(0, 20);
+    value = value.replace(/^(\d{7})(\d)/, "$1-$2");
+    value = value.replace(/^(\d{7}-\d{2})(\d)/, "$1.$2");
+    value = value.replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2");
+    value = value.replace(/^(\d{7}-\d{2}\.\d{4}\.\d)(\d)/, "$1.$2");
+    value = value.replace(/^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2})(\d)/, "$1.$2");
 
-  // aplica máscara CNJ
-  value = value.replace(/^(\d{7})(\d)/, "$1-$2");
-  value = value.replace(/^(\d{7}-\d{2})(\d)/, "$1.$2");
-  value = value.replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2");
-  value = value.replace(/^(\d{7}-\d{2}\.\d{4}\.\d)(\d)/, "$1.$2");
-  value = value.replace(/^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2})(\d)/, "$1.$2");
-
-  e.target.value = value;
-});
+    e.target.value = value;
+  });
+}
 document.getElementById("registerForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
-
+  console.log("CLICOU EM CADASTRAR");
   const inputs = e.target.querySelectorAll("input");
 
   const nome = inputs[0].value;
@@ -114,3 +112,80 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
     alert(data.message || "Erro no login");
   }
 });
+document.getElementById("processoForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const numero_processo = document.getElementById("processo").value;
+  const nome_cliente = document.getElementById("nomeCliente").value;
+  const tipo_acao = document.getElementById("tipoAcao").value;
+  const data_protocolo = document.getElementById("dataProtocolo").value;
+  const cpf_cliente = document.getElementById("cpf").value.replace(/\D/g, "");
+
+  // ⚠️ depois vamos pegar isso do login
+  const adv_id = 1;
+
+  console.log("ENVIANDO PROCESSO:", {
+    numero_processo,
+    nome_cliente,
+    tipo_acao,
+    data_protocolo,
+    cpf_cliente,
+    adv_id
+  });
+
+  try {
+    const res = await fetch("http://localhost:3000/processos/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        numero_processo,
+        nome_cliente,
+        tipo_acao,
+        data_protocolo,
+        cpf_cliente,
+        adv_id
+      })
+    });
+
+    const data = await res.json();
+
+    console.log("RESPOSTA:", data);
+
+    alert(data.message);
+
+  } catch (error) {
+    console.error("ERRO AO SALVAR PROCESSO:", error);
+  }
+});
+async function listarProcessos() {
+  try {
+    const res = await fetch("http://localhost:3000/processos");
+    const processos = await res.json();
+
+    const lista = document.getElementById("lista-processos");
+
+    if (!lista) return;
+
+    lista.innerHTML = "";
+
+    processos.forEach(p => {
+      lista.innerHTML += `
+        <div class="card">
+          <strong>${p.numero_processo}</strong><br>
+          Cliente: ${p.nome_cliente}<br>
+          Tipo: ${p.tipo_acao}<br>
+          Status: ${p.status_processo}<br>
+          Data: ${p.data_protocolo}<br><br>
+        </div>
+      `;
+    });
+
+  } catch (error) {
+    console.error("Erro ao listar:", error);
+  }
+}
+if (document.getElementById("lista-processos")) {
+  listarProcessos();
+}
