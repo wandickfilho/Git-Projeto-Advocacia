@@ -1,45 +1,46 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login - Advocacia</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
+  <!DOCTYPE html>
+  <html lang="pt-BR">
+  <head>
+    <link rel="icon" type="image/png" href="imgs/logotipo1.png">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Login - Advocacia</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<body class="auth-body">
+  <body class="auth-body">
 
-  <div class="auth-container">
+    <div class="auth-container">
 
-    <!-- LOGO -->
-    <div class="auth-logo">
-      <img src="imgs/logotipo1.png" alt="Logo">
+      <!-- LOGO -->
+      <div class="auth-logo">
+        <img src="imgs/logotipo1.png" alt="Logo">
+      </div>
+
+      <!-- CARD LOGIN -->
+      <div class="auth-card">
+
+        <h2>Entrar</h2>
+
+        <form id="loginForm" class="auth-form">
+
+          <input type="email" id="email" placeholder="Email" required />
+          <input type="password" id="senha" placeholder="Senha" required />
+
+          <button type="submit">Entrar</button>
+
+        </form>
+
+        <!-- BOTÃO PARA CADASTRO -->
+        <p class="auth-link">
+          Não tem conta?
+          <a href="Pages/cadastro.html">Criar conta</a>
+        </p>
+
+      </div>
     </div>
 
-    <!-- CARD LOGIN -->
-    <div class="auth-card">
+    <script src="script.js"></script>
 
-      <h2>Entrar</h2>
-
-      <form id="loginForm" class="auth-form">
-
-        <input type="email" placeholder="Email" required />
-        <input type="password" placeholder="Senha" required />
-
-        <button type="submit">Entrar</button>
-
-      </form>
-
-      <!-- BOTÃO PARA CADASTRO -->
-      <p class="auth-link">
-        Não tem conta?
-        <a href="Pages/cadastro.html">Criar conta</a>
-      </p>
-
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-
-</body>
-</html>
+  </body>
+  </html>

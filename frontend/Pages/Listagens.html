@@ -15,11 +15,15 @@
       <p>Visualização dos processos cadastrados</p>
     </header>
 
+    <!-- =========================
+         TABELA DE PROCESSOS
+    ========================== -->
     <section class="card">
       <h2>Processos</h2>
 
       <div class="tabela-wrapper">
         <table id="tabelaProcessos">
+
           <thead>
             <tr>
               <th>Número</th>
@@ -28,24 +32,31 @@
               <th>Tipo</th>
               <th>Status</th>
               <th>Protocolo</th>
-              <th>Ações</th>
             </tr>
           </thead>
 
           <tbody id="corpoTabela">
             <tr>
-              <td colspan="7">Nenhum processo encontrado</td>
+              <td colspan="6">Carregando processos...</td>
             </tr>
           </tbody>
+
         </table>
       </div>
     </section>
+
   </main>
+
+  <!-- VOLTAR -->
   <a href="controle.html" class="button-Return-Listens">
-      <img src="../imgs/return_blue_arrow.png" alt="Voltar">
-      </a>
-<div class="logo-full">
-  <img src="../imgs/logotipo1.png" alt="Logo da Empresa">
-</div>
+    <img src="../imgs/return_blue_arrow.png" alt="Voltar">
+  </a>
+
+  <!-- LOGO -->
+  <div class="logo-full">
+    <img src="../imgs/logotipo1.png" alt="Logo da Empresa">
+  </div>
+
+  <script src="../script.js"></script>
 </body>
 </html>

@@ -1,191 +1,180 @@
-//localStorage.removeItem("cookieChoice");
-console.log("SCRIPT CARREGOU");
-document.addEventListener("DOMContentLoaded", () => {
-  const banner = document.getElementById("cookie-banner");
+//////////////////////////////
+// 🔐 PROTEÇÃO DE ROTAS
+//////////////////////////////
+(() => {
+  const path = window.location.pathname;
+  const isPrivatePage = ["controle.html", "listagens.html"].some(page =>
+    path.includes(page)
+  );
 
-  if (banner && localStorage.getItem("cookieChoice")) {
-    banner.style.display = "none";
+  const token = localStorage.getItem("token");
+
+  if (isPrivatePage && !token) {
+    window.location.href = "../index.html";
   }
+})();
 
-  const acceptBtn = document.getElementById("accept-cookies");
-  const rejectBtn = document.getElementById("reject-cookies");
+//////////////////////////////
+// 📦 CACHE GLOBAL
+//////////////////////////////
+let processosCache = [];
 
-  if (acceptBtn) {
-    acceptBtn.onclick = () => {
-      localStorage.setItem("cookieChoice", "accepted");
-      banner.style.display = "none";
-    };
-  }
+//////////////////////////////
+// 📄 CARREGAR PROCESSOS
+//////////////////////////////
+async function carregarProcessos() {
+  const token = localStorage.getItem("token");
 
-  if (rejectBtn) {
-    rejectBtn.onclick = () => {
-      localStorage.setItem("cookieChoice", "rejected");
-      banner.style.display = "none";
-    };
-  }
-});
-const cpfInput = document.getElementById("cpf");
-
-if (cpfInput) {
-  cpfInput.addEventListener("input", (e) => {
-    let value = e.target.value;
-
-    value = value.replace(/\D/g, "");
-    value = value.replace(/(\d{3})(\d)/, "$1.$2");
-    value = value.replace(/(\d{3})(\d)/, "$1.$2");
-    value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-
-    e.target.value = value;
+  const res = await fetch("http://localhost:3000/processos", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
   });
-}
-const processoInput = document.getElementById("processo");
 
-if (processoInput) {
-  processoInput.addEventListener("input", (e) => {
-    let value = e.target.value;
-
-    value = value.replace(/\D/g, "");
-    value = value.slice(0, 20);
-
-    value = value.replace(/^(\d{7})(\d)/, "$1-$2");
-    value = value.replace(/^(\d{7}-\d{2})(\d)/, "$1.$2");
-    value = value.replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2");
-    value = value.replace(/^(\d{7}-\d{2}\.\d{4}\.\d)(\d)/, "$1.$2");
-    value = value.replace(/^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2})(\d)/, "$1.$2");
-
-    e.target.value = value;
-  });
-}
-document.getElementById("registerForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  console.log("CLICOU EM CADASTRAR");
-  const inputs = e.target.querySelectorAll("input");
-
-  const nome = inputs[0].value;
-  const email = inputs[1].value;
-  const senha = inputs[2].value;
-  const confirmar = inputs[3].value;
-
-  if (senha !== confirmar) {
-    alert("As senhas não coincidem!");
+  if (!res.ok) {
+    alert("Erro ao carregar processos");
     return;
   }
 
-  const res = await fetch("http://localhost:3000/auth/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ nome, email, senha })
-  });
+  processosCache = await res.json();
+  renderizarProcessos(processosCache);
+}
 
-  const data = await res.json();
+//////////////////////////////
+// 🧾 RENDER LISTA
+//////////////////////////////
+function renderizarProcessos(lista) {
+  const tbody = document.getElementById("corpoTabela");
+  if (!tbody) return;
 
-  alert(data.message || "Cadastro realizado!");
-});
-document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const inputs = e.target.querySelectorAll("input");
-
-  const email = inputs[0].value;
-  const senha = inputs[1].value;
-
-  const res = await fetch("http://localhost:3000/auth/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ email, senha })
-  });
-
-  const data = await res.json();
-
-  if (data.user) {
-    alert("Login realizado com sucesso!");
-
-    // guarda sessão (temporário)
-    localStorage.setItem("usuarioLogado", JSON.stringify(data.user));
-
-    window.location.href = "index.html";
-  } else {
-    alert(data.message || "Erro no login");
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">Nenhum processo encontrado</td></tr>`;
+    return;
   }
+
+  tbody.innerHTML = lista.map(p => `
+    <tr>
+      <td>${p.numero_processo}</td>
+      <td>${p.nome_cliente}</td>
+      <td>${p.cpf_cliente}</td>
+      <td>${p.tipo_acao}</td>
+      <td>${p.status_processo}</td>
+      <td>${p.data_protocolo}</td>
+    </tr>
+  `).join("");
+}
+
+//////////////////////////////
+// 🚀 INICIALIZA LISTAGEM
+//////////////////////////////
+if (document.getElementById("corpoTabela")) {
+  carregarProcessos();
+}
+
+//////////////////////////////
+// 🔍 FILTRO
+//////////////////////////////
+document.getElementById("btnFiltrar")?.addEventListener("click", () => {
+  const busca = (document.getElementById("filtroBusca")?.value || "")
+    .toLowerCase()
+    .trim();
+
+  const status = (document.getElementById("filtroStatus")?.value || "")
+    .toLowerCase()
+    .trim();
+
+  const filtrados = processosCache.filter(p => {
+    const statusProcesso = (p.status_processo || "").toLowerCase().trim();
+    const nome = (p.nome_cliente || "").toLowerCase();
+    const numero = (p.numero_processo || "").toLowerCase();
+
+    const matchStatus = status ? statusProcesso === status : true;
+
+    const matchBusca = busca
+      ? numero.includes(busca) || nome.includes(busca)
+      : true;
+
+    return matchStatus && matchBusca;
+  });
+
+  renderizarProcessos(filtrados);
 });
+
+//////////////////////////////
+// 🧹 LIMPAR FILTRO
+//////////////////////////////
+document.getElementById("btnLimparFiltros")?.addEventListener("click", () => {
+  const busca = document.getElementById("filtroBusca");
+  const status = document.getElementById("filtroStatus");
+
+  if (busca) busca.value = "";
+  if (status) status.value = "";
+
+  renderizarProcessos(processosCache);
+});
+
+//////////////////////////////
+// ⚖️ CADASTRO PROCESSO
+//////////////////////////////
 document.getElementById("processoForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const numero_processo = document.getElementById("processo").value;
-  const nome_cliente = document.getElementById("nomeCliente").value;
-  const tipo_acao = document.getElementById("tipoAcao").value;
-  const data_protocolo = document.getElementById("dataProtocolo").value;
-  const cpf_cliente = document.getElementById("cpf").value.replace(/\D/g, "");
+  const usuario = JSON.parse(localStorage.getItem("usuario"));
+  const token = localStorage.getItem("token");
 
-  // ⚠️ depois vamos pegar isso do login
-  const adv_id = 1;
+  const payload = {
+    numero_processo: document.getElementById("numero_processo").value,
+    nome_cliente: document.getElementById("nome_cliente").value,
+    cpf_cliente: document.getElementById("cpf_cliente").value,
+    tipo_acao: document.getElementById("tipo_acao").value,
+    status_processo: document.getElementById("status_processo").value,
+    data_protocolo: document.getElementById("data_protocolo").value,
+    descricao: document.getElementById("descricao").value,
+    adv_id: usuario.id
+  };
 
-  console.log("ENVIANDO PROCESSO:", {
-    numero_processo,
-    nome_cliente,
-    tipo_acao,
-    data_protocolo,
-    cpf_cliente,
-    adv_id
+  const res = await fetch("http://localhost:3000/processos", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
   });
 
-  try {
-    const res = await fetch("http://localhost:3000/processos/create", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        numero_processo,
-        nome_cliente,
-        tipo_acao,
-        data_protocolo,
-        cpf_cliente,
-        adv_id
-      })
-    });
+  const data = await res.json();
+  alert(data.message || "Processo salvo com sucesso!");
 
-    const data = await res.json();
-
-    console.log("RESPOSTA:", data);
-
-    alert(data.message);
-
-  } catch (error) {
-    console.error("ERRO AO SALVAR PROCESSO:", error);
+  if (res.ok) {
+    e.target.reset();
+    carregarProcessos(); // atualiza lista
   }
 });
-async function listarProcessos() {
-  try {
-    const res = await fetch("http://localhost:3000/processos");
-    const processos = await res.json();
 
-    const lista = document.getElementById("lista-processos");
+//////////////////////////////
+// 📌 MÁSCARA CPF
+//////////////////////////////
+document.getElementById("cpf_cliente")?.addEventListener("input", (e) => {
+  let v = e.target.value.replace(/\D/g, "").slice(0, 11);
 
-    if (!lista) return;
+  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+  v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 
-    lista.innerHTML = "";
+  e.target.value = v;
+});
 
-    processos.forEach(p => {
-      lista.innerHTML += `
-        <div class="card">
-          <strong>${p.numero_processo}</strong><br>
-          Cliente: ${p.nome_cliente}<br>
-          Tipo: ${p.tipo_acao}<br>
-          Status: ${p.status_processo}<br>
-          Data: ${p.data_protocolo}<br><br>
-        </div>
-      `;
-    });
+//////////////////////////////
+// 📌 MÁSCARA PROCESSO CNJ
+//////////////////////////////
+document.getElementById("numero_processo")?.addEventListener("input", (e) => {
+  let v = e.target.value.replace(/\D/g, "").slice(0, 20);
 
-  } catch (error) {
-    console.error("Erro ao listar:", error);
-  }
-}
-if (document.getElementById("lista-processos")) {
-  listarProcessos();
-}
+  v = v.replace(/^(\d{7})(\d)/, "$1-$2");
+  v = v.replace(/^(\d{7}-\d{2})(\d)/, "$1.$2");
+  v = v.replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2");
+  v = v.replace(/^(\d{7}-\d{2}\.\d{4}\.\d{1})(\d)/, "$1.$2");
+  v = v.replace(/^(\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2})(\d)/, "$1.$2");
+
+  e.target.value = v;
+});

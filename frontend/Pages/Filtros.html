@@ -6,43 +6,69 @@
   <title>Filtros</title>
   <link rel="stylesheet" href="../style.css">
 </head>
+
 <body>
   <main class="container">
-    
+
     <header class="page-header card">
       <h1>Filtros</h1>
       <p>Filtrar processos cadastrados</p>
     </header>
-    
+
+    <!-- =========================
+         FILTROS
+    ========================== -->
     <section class="card">
       <h2>Filtros</h2>
+
       <div class="form-grid">
+
+        <!-- 🔍 BUSCA -->
         <div class="campo">
-          <label for="filtroBusca">Busca</label>
-          <input type="text" id="filtroBusca" name="filtroBusca">
+          <label>Busca</label>
+          <input type="text" id="filtroBusca">
         </div>
-        
+
+        <!-- 📊 STATUS -->
         <div class="campo">
-          <label for="filtroStatus">Status</label>
-          <select id="filtroStatus" name="filtroStatus">
+          <label>Status</label>
+          <select id="filtroStatus">
             <option value="">Todos</option>
-            <option value="pendente">Pendente</option>
-            <option value="em_andamento">Em andamento</option>
-            <option value="concluido">Concluído</option>
-            <option value="arquivado">Arquivado</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Arquivado">Arquivado</option>
+            <option value="Pendente">Pendente</option>
           </select>
         </div>
-        
+
+        <!-- 🔘 BOTÕES -->
         <div class="acoes-form campo-full">
-          <button type="button" id="btnLimparFiltros">Limpar filtros</button>
+          <button type="button" id="btnFiltrar">Filtrar</button>
+          <button type="button" id="btnLimparFiltros">Limpar</button>
         </div>
+
       </div>
-      <a href="controle.html" class="button-Return-Filters">
-        <img src="../imgs/return_blue_arrow.png" alt="Voltar">
-      </a>
-    </main>
-<div class="logo-full">
-  <img src="../imgs/logotipo1.png" alt="Logo da Empresa">
-</div>
+    </section>
+
+    <!-- =========================
+         LISTAGEM DE PROCESSOS
+    ========================== -->
+    <section class="card">
+      <h2>Resultados</h2>
+      <div id="lista-processos"></div>
+    </section>
+
+    <!-- 🔙 VOLTAR -->
+    <a href="controle.html" class="button-Return-Filters">
+      <img src="../imgs/return_blue_arrow.png" alt="Voltar">
+    </a>
+
+  </main>
+
+  <div class="logo-full">
+    <img src="../imgs/logotipo1.png" alt="Logo da Empresa">
+  </div>
+
+  <script src="../script.js"></script>
 </body>
 </html>
