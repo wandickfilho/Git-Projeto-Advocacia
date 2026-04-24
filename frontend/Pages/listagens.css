@@ -151,3 +151,19 @@
 .is-hidden {
   display: none;
 }
+.btn-voltar {
+  background: linear-gradient(135deg, #f59e0b, #facc15);
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 14px rgba(220, 38, 38, 0.25);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-voltar:hover {
+  background: linear-gradient(135deg,  #f59e0b, #facc15);
+}

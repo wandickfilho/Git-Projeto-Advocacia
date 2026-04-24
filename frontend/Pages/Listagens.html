@@ -6,6 +6,7 @@
   <title>Listagem de Processos</title>
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="./listagens.css">
+  <script src="../auth-check.js"></script>
 </head>
 
 <body>
@@ -13,9 +14,12 @@
 <main class="container">
 
   <header class="page-header card">
-    <h1>Listagem de Processos</h1>
-    <p>Visualização dos processos cadastrados</p>
-  </header>
+  <!-- ✅ Botão voltar -->
+  <a href="controle.html" class="btn-voltar">← Voltar</a>
+  <h1>Listagem de Processos</h1>
+  <p>Visualização dos processos cadastrados</p>
+
+</header>
 
   <!-- 🔍 FILTROS -->
   <section class="card">
@@ -87,11 +91,13 @@
       <div>
         <h4>📷 Fotos</h4>
         <div class="arquivos-grid" id="modalFotosGrid"></div>
+        <input type="file" id="edit_fotos" multiple accept="image/*">
       </div>
 
       <div>
         <h4>📄 Documentos</h4>
         <div class="arquivos-grid" id="modalDocsGrid"></div>
+        <input type="file" id="edit_docs" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"> 
       </div>
 
     </div>

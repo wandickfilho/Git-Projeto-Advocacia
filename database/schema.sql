@@ -30,3 +30,4 @@ CREATE TABLE processos (
 SELECT * FROM cadastroAdvogado;
 SELECT * FROM processos;
 SELECT id, nome_adv, email FROM cadastroAdvogado;
+

@@ -70,10 +70,8 @@ router.post("/", auth, uploadCampos, (req, res) => {
 // 📌 LISTAR PROCESSOS
 //////////////////////////////
 router.get("/", auth, (req, res) => {
-  const advId = req.user?.id;
   db.query(
-    `SELECT * FROM processos WHERE adv_id = ? ORDER BY id_processo DESC`,
-    [advId],
+    `SELECT * FROM processos ORDER BY id_processo DESC`,
     (err, results) => {
       if (err) {
         console.error("ERRO SQL:", err);
@@ -87,29 +85,77 @@ router.get("/", auth, (req, res) => {
 //////////////////////////////
 // ✏️ ATUALIZAR PROCESSO
 //////////////////////////////
-router.put("/:id", auth, (req, res) => {
+router.put("/:id", auth, uploadCampos, (req, res) => {
   const { id } = req.params;
   const advId = req.user?.id;
   const {
     numero_processo, nome_cliente, cpf_cliente,
-    tipo_acao, status_processo, data_protocolo
+    tipo_acao, status_processo, data_protocolo,
+    removerFotos, removerDocumentos
   } = req.body;
 
+  // Busca os arquivos atuais do processo
   db.query(
-    `UPDATE processos SET
-      numero_processo = ?, nome_cliente = ?, cpf_cliente = ?,
-      tipo_acao = ?, status_processo = ?, data_protocolo = ?
-     WHERE id_processo = ? AND adv_id = ?`,
-    [numero_processo, nome_cliente, cpf_cliente, tipo_acao, status_processo, data_protocolo, id, advId],
-    (err, result) => {
-      if (err) {
-        console.error("ERRO SQL UPDATE:", err);
-        return res.status(500).json({ message: "Erro ao atualizar processo" });
-      }
-      if (result.affectedRows === 0) {
+    `SELECT fotos, documentos FROM processos WHERE id_processo = ? AND adv_id = ?`,
+    [id, advId],
+    (err, rows) => {
+      if (err || !rows.length) {
         return res.status(404).json({ message: "Processo não encontrado" });
       }
-      res.json({ message: "Processo atualizado com sucesso" });
+
+      // Parse dos arquivos existentes
+      let fotosAtuais = [], docsAtuais = [];
+      try { fotosAtuais = JSON.parse(rows[0].fotos || "[]"); } catch {}
+      try { docsAtuais  = JSON.parse(rows[0].documentos || "[]"); } catch {}
+
+      // Arquivos para remover
+      const fotosRemover = JSON.parse(removerFotos || "[]");
+      const docsRemover  = JSON.parse(removerDocumentos || "[]");
+
+      // Remove do disco
+      fotosRemover.forEach(nome => {
+        const p = path.join(pastaFotos, nome);
+        if (fs.existsSync(p)) fs.unlinkSync(p);
+      });
+      docsRemover.forEach(nome => {
+        const p = path.join(pastaDocs, nome);
+        if (fs.existsSync(p)) fs.unlinkSync(p);
+      });
+
+      // Arquivos que sobram + novos uploads
+      const fotasFinais = [
+        ...fotosAtuais.filter(f => !fotosRemover.includes(f)),
+        ...(req.files?.fotos || []).map(f => f.filename)
+      ];
+      const docsFinais = [
+        ...docsAtuais.filter(d => !docsRemover.includes(d)),
+        ...(req.files?.documentos || []).map(f => f.filename)
+      ];
+
+      // Atualiza no banco
+      db.query(
+        `UPDATE processos SET
+          numero_processo = ?, nome_cliente = ?, cpf_cliente = ?,
+          tipo_acao = ?, status_processo = ?, data_protocolo = ?,
+          fotos = ?, documentos = ?
+         WHERE id_processo = ? AND adv_id = ?`,
+        [
+          numero_processo, nome_cliente, cpf_cliente,
+          tipo_acao, status_processo, data_protocolo,
+          JSON.stringify(fotasFinais), JSON.stringify(docsFinais),
+          id, advId
+        ],
+        (err2, result) => {
+          if (err2) {
+            console.error("ERRO SQL UPDATE:", err2);
+            return res.status(500).json({ message: "Erro ao atualizar processo" });
+          }
+          if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Processo não encontrado" });
+          }
+          res.json({ message: "Processo atualizado com sucesso" });
+        }
+      );
     }
   );
 });
@@ -123,8 +169,8 @@ router.delete("/:id", auth, (req, res) => {
 
   // Busca os arquivos antes de deletar para removê-los do disco
   db.query(
-    `SELECT fotos, documentos FROM processos WHERE id_processo = ? AND adv_id = ?`,
-    [id, advId],
+    `SELECT fotos, documentos FROM processos WHERE id_processo = ?`,
+      [id],
     (err, rows) => {
       if (err || !rows.length) {
         return res.status(404).json({ message: "Processo não encontrado" });
@@ -139,7 +185,8 @@ router.delete("/:id", auth, (req, res) => {
 
       // Deleta do banco
       db.query(
-        `DELETE FROM processos WHERE id_processo = ? AND adv_id = ?`,
+        `DELETE FROM processos WHERE id_processo = ?`,
+        [id],
         [id, advId],
         (err2) => {
           if (err2) {

@@ -147,6 +147,12 @@ document.getElementById("registerForm")?.addEventListener("submit", async (e) =>
   const nome = document.getElementById("nome").value;
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
+  const confirmarSenha = document.getElementById("confirmarSenha").value;
+  
+  if (senha !== confirmarSenha){
+    alert ("Senhas não correspondem! ");
+    return;
+  }
 
   try {
     const res = await fetch("http://localhost:3000/auth/register", {
