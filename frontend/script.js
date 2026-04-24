@@ -120,19 +120,23 @@ function renderizarProcessos(lista) {
     return;
   }
 
-  tbody.innerHTML = lista.map(p => `
-    <tr>
-      <td>${p.numero_processo}</td>
-      <td>${p.nome_cliente}</td>
-      <td>${p.cpf_cliente}</td>
-      <td>${p.tipo_acao}</td>
-      <td>${p.status_processo}</td>
-      <td>${(p.data_protocolo || "").split("T")[0]}</td>
-      <td>
-        <button onclick="editarProcesso(${p.id || p.id_processo})">Editar</button>
-      </td>
-    </tr>
-  `).join("");
+  tbody.innerHTML = lista.map(p => {
+    // ✅ FIX: normaliza o ID independente do nome do campo
+    const id = p.id_processo ?? p.id ?? p.processo_id;
+    return `
+      <tr>
+        <td>${p.numero_processo}</td>
+        <td>${p.nome_cliente}</td>
+        <td>${p.cpf_cliente}</td>
+        <td>${p.tipo_acao}</td>
+        <td>${p.status_processo}</td>
+        <td>${(p.data_protocolo || "").split("T")[0]}</td>
+        <td>
+          <button onclick="editarProcesso(${id})">Editar</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 //////////////////////////////
@@ -211,11 +215,15 @@ document.getElementById("processoForm")?.addEventListener("submit", async (e) =>
 // ✏️ EDITAR PROCESSO
 //////////////////////////////
 function editarProcesso(id) {
+  // ✅ FIX: usa == ao invés de === para evitar falha por tipo (string vs number)
   const p = processosCache.find(x =>
-    x.id === id || x.id_processo === id || x.processo_id === id
+    x.id == id || x.id_processo == id || x.processo_id == id
   );
 
-  if (!p) return;
+  if (!p) {
+    console.error("Processo não encontrado no cache. ID:", id);
+    return;
+  }
 
   idEditando = id;
 
@@ -233,6 +241,11 @@ function editarProcesso(id) {
 // 💾 SALVAR EDIÇÃO
 //////////////////////////////
 async function salvarEdicao() {
+  if (!idEditando) {
+    alert("Nenhum processo selecionado para editar.");
+    return;
+  }
+
   const token = localStorage.getItem("token");
 
   const payload = {
@@ -265,35 +278,33 @@ function fecharModal() {
   document.getElementById("modalEditar").style.display = "none";
   idEditando = null;
 }
-const cpfInput = document.getElementById("cpf_cliente") || document.getElementById("edit_cpf");
 
-cpfInput?.addEventListener("input", (e) => {
-  let value = e.target.value.replace(/\D/g, "");
+//////////////////////////////
+// 🎭 MÁSCARAS
+//////////////////////////////
 
-  value = value.slice(0, 11);
-
-  value = value
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-
-  e.target.value = value;
+// ✅ FIX: aplica máscara de CPF nos dois inputs (cadastro e edição)
+["cpf_cliente", "edit_cpf"].forEach(id => {
+  document.getElementById(id)?.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+    v = v
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    e.target.value = v;
+  });
 });
-const processoInput =
-  document.getElementById("numero_processo") ||
-  document.getElementById("edit_numero");
 
-processoInput?.addEventListener("input", (e) => {
-  let value = e.target.value.replace(/\D/g, "");
-
-  value = value.slice(0, 20);
-
-  value = value
-    .replace(/^(\d{7})(\d)/, "$1-$2")
-    .replace(/^(\d{7}-\d{2})(\d)/, "$1.$2")
-    .replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2")
-    .replace(/^(\d{7}-\d{2}\.\d{4}\.\d)(\d)/, "$1.$2")
-    .replace(/^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2})(\d+)/, "$1.$2");
-
-  e.target.value = value;
+// ✅ FIX: aplica máscara de número do processo nos dois inputs (cadastro e edição)
+["numero_processo", "edit_numero"].forEach(id => {
+  document.getElementById(id)?.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, "").slice(0, 20);
+    v = v
+      .replace(/^(\d{7})(\d)/, "$1-$2")
+      .replace(/^(\d{7}-\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{7}-\d{2}\.\d{4})(\d)/, "$1.$2")
+      .replace(/^(\d{7}-\d{2}\.\d{4}\.\d)(\d)/, "$1.$2")
+      .replace(/^(\d{7}-\d{2}\.\d{4}\.\d\.\d{2})(\d+)/, "$1.$2");
+    e.target.value = v;
+  });
 });
