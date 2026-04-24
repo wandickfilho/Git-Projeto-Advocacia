@@ -5,6 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Controle de Processos</title>
   <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* ── Zonas de upload ── */
+    .upload-zone {
+      border: 2px dashed #aaa;
+      border-radius: 8px;
+      padding: 1.2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fafafa;
+      position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: #4a90e2;
+      background: #f0f6ff;
+    }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-zone .upload-icon { font-size: 2rem; display: block; margin-bottom: 0.4rem; }
+    .upload-zone p  { margin: 0; font-size: 0.85rem; color: #666; }
+    .upload-zone small { color: #aaa; font-size: 0.75rem; }
+
+    /* ── Previews ── */
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+    .preview-item {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+    .preview-item.foto { width: 80px; height: 80px; }
+    .preview-item.foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .preview-item.doc {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.6rem;
+      background: #f4f4f4;
+      max-width: 220px;
+    }
+    .preview-item.doc .doc-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .preview-item.doc .doc-name {
+      font-size: 0.72rem; color: #444;
+      white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-width: 130px;
+    }
+
+    /* ── Botão remover ── */
+    .btn-remover {
+      position: absolute;
+      top: 2px; right: 2px;
+      background: rgba(200,40,40,0.85);
+      color: #fff; border: none;
+      border-radius: 50%;
+      width: 18px; height: 18px;
+      font-size: 0.6rem; line-height: 18px;
+      text-align: center; cursor: pointer; padding: 0;
+    }
+    .preview-item.doc .btn-remover {
+      position: static;
+      border-radius: 4px;
+      width: auto; height: auto;
+      padding: 2px 5px;
+    }
+
+    .upload-count { font-size: 0.75rem; color: #4a90e2; margin-top: 0.3rem; display: block; }
+  </style>
 </head>
 
 <body>
@@ -40,12 +120,13 @@
 
       <div class="campo">
         <label>Tipo de ação</label>
-        <select id="edit_tipo" required>
-        <option value="Cível">Civil</option>
-        <option value="Criminal">Criminal</option>
-        <option value="Trabalhista">Trabalhista</option>
+        <select id="tipo_acao" required>
+          <option value="Cível">Civil</option>
+          <option value="Criminal">Criminal</option>
+          <option value="Trabalhista">Trabalhista</option>
+        </select>
       </div>
-    </select>
+
       <div class="campo">
         <label>Status</label>
         <select id="status_processo" required>
@@ -66,6 +147,36 @@
         <textarea id="descricao" rows="4"></textarea>
       </div>
 
+      <!-- ══════════════════════════
+           FOTOS
+      ══════════════════════════ -->
+      <div class="campo campo-full">
+        <label>Fotos</label>
+        <div class="upload-zone" id="zonaFotos">
+          <input type="file" id="inputFotos" accept="image/*" multiple>
+          <span class="upload-icon">🖼️</span>
+          <p>Clique ou arraste as fotos aqui</p>
+          <small>JPG, PNG, WEBP — múltiplas permitidas</small>
+        </div>
+        <span class="upload-count" id="countFotos"></span>
+        <div class="preview-grid" id="previewFotos"></div>
+      </div>
+
+      <!-- ══════════════════════════
+           DOCUMENTOS
+      ══════════════════════════ -->
+      <div class="campo campo-full">
+        <label>Documentos</label>
+        <div class="upload-zone" id="zonaDocumentos">
+          <input type="file" id="inputDocumentos" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" multiple>
+          <span class="upload-icon">📄</span>
+          <p>Clique ou arraste os documentos aqui</p>
+          <small>PDF, DOC, DOCX, XLS, XLSX, TXT — múltiplos permitidos</small>
+        </div>
+        <span class="upload-count" id="countDocumentos"></span>
+        <div class="preview-grid" id="previewDocumentos"></div>
+      </div>
+
       <div class="acoes-form campo-full">
         <button type="submit">Salvar</button>
       </div>
@@ -83,5 +194,87 @@
 </main>
 
 <script src="../script.js"></script>
+<script>
+  //////////////////////////////
+  // 📁 UPLOAD — fotos e documentos
+  //////////////////////////////
+
+  let listaFotos = [];
+  let listaDocumentos = [];
+
+  function iconeDoc(nome) {
+    const ext = nome.split(".").pop().toLowerCase();
+    return { pdf:"📕", doc:"📘", docx:"📘", xls:"📗", xlsx:"📗", txt:"📄" }[ext] || "📄";
+  }
+
+  function renderFotos() {
+    const grid  = document.getElementById("previewFotos");
+    const count = document.getElementById("countFotos");
+    grid.innerHTML = "";
+    count.textContent = listaFotos.length ? listaFotos.length + " foto(s) selecionada(s)" : "";
+    listaFotos.forEach(function(file, i) {
+      const url  = URL.createObjectURL(file);
+      const item = document.createElement("div");
+      item.className = "preview-item foto";
+      item.innerHTML = '<img src="' + url + '" title="' + file.name + '">'
+                     + '<button type="button" class="btn-remover" onclick="removerFoto(' + i + ')">✕</button>';
+      grid.appendChild(item);
+    });
+  }
+
+  function renderDocumentos() {
+    const grid  = document.getElementById("previewDocumentos");
+    const count = document.getElementById("countDocumentos");
+    grid.innerHTML = "";
+    count.textContent = listaDocumentos.length ? listaDocumentos.length + " documento(s) selecionado(s)" : "";
+    listaDocumentos.forEach(function(file, i) {
+      const item = document.createElement("div");
+      item.className = "preview-item doc";
+      item.innerHTML = '<span class="doc-icon">' + iconeDoc(file.name) + '</span>'
+                     + '<span class="doc-name" title="' + file.name + '">' + file.name + '</span>'
+                     + '<button type="button" class="btn-remover" onclick="removerDoc(' + i + ')">✕</button>';
+      grid.appendChild(item);
+    });
+  }
+
+  function removerFoto(i)  { listaFotos.splice(i, 1);      renderFotos(); }
+  function removerDoc(i)   { listaDocumentos.splice(i, 1); renderDocumentos(); }
+
+  document.getElementById("inputFotos").addEventListener("change", function(e) {
+    listaFotos.push.apply(listaFotos, Array.from(e.target.files));
+    e.target.value = "";
+    renderFotos();
+  });
+
+  document.getElementById("inputDocumentos").addEventListener("change", function(e) {
+    listaDocumentos.push.apply(listaDocumentos, Array.from(e.target.files));
+    e.target.value = "";
+    renderDocumentos();
+  });
+
+  // Drag & drop
+  ["zonaFotos", "zonaDocumentos"].forEach(function(id) {
+    const zona = document.getElementById(id);
+    zona.addEventListener("dragover",  function(e) { e.preventDefault(); zona.classList.add("dragover"); });
+    zona.addEventListener("dragleave", function()  { zona.classList.remove("dragover"); });
+    zona.addEventListener("drop", function(e) {
+      e.preventDefault();
+      zona.classList.remove("dragover");
+      const arquivos = Array.from(e.dataTransfer.files);
+      if (id === "zonaFotos") {
+        listaFotos.push.apply(listaFotos, arquivos.filter(function(f){ return f.type.startsWith("image/"); }));
+        renderFotos();
+      } else {
+        listaDocumentos.push.apply(listaDocumentos, arquivos);
+        renderDocumentos();
+      }
+    });
+  });
+
+  // Expõe para o script.js usar no submit
+  window.getArquivosSelecionados = function() {
+    return { fotos: listaFotos, documentos: listaDocumentos };
+  };
+</script>
 </body>
 </html>

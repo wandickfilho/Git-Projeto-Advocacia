@@ -391,8 +391,6 @@ body::before {
 /* ============================= */
 /* ✏️ MODAL DE EDIÇÃO (CORRIGIDO)
 /* ============================= */
-
-
 #modalEditar {
   position: fixed;
   inset: 0;

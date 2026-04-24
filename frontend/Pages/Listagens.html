@@ -5,6 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Listagem de Processos</title>
   <link rel="stylesheet" href="../style.css">
+  <style>
+    /* ── Botões de ação ── */
+    .btn-excluir {
+      background: #e53e3e;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    .btn-excluir:hover { background: #c53030; }
+
+    /* ── Seção de arquivos no modal ── */
+    .arquivos-section { margin-top: 1rem; }
+    .arquivos-section h4 { margin-bottom: 0.5rem; font-size: 0.9rem; color: #555; }
+
+    .arquivos-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Thumbnail foto */
+    .arquivo-foto {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+      cursor: pointer;
+    }
+    .arquivo-foto img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+    .arquivo-foto .overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center;
+      justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+      font-size: 1.3rem;
+    }
+    .arquivo-foto:hover .overlay { opacity: 1; }
+
+    /* Item documento */
+    .arquivo-doc {
+      display: flex; align-items: center;
+      gap: 0.4rem; padding: 0.4rem 0.7rem;
+      background: #f4f4f4; border-radius: 6px;
+      border: 1px solid #ddd; text-decoration: none;
+      color: #333; font-size: 0.78rem;
+      transition: background 0.2s;
+    }
+    .arquivo-doc:hover { background: #e8f0fe; }
+    .arquivo-doc .doc-icon { font-size: 1.3rem; }
+    .arquivo-doc .doc-name {
+      max-width: 140px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .sem-arquivos { font-size: 0.78rem; color: #aaa; font-style: italic; }
+  </style>
 </head>
 
 <body>
@@ -19,9 +85,7 @@
   <!-- 🔍 FILTROS -->
   <section class="card">
     <h2>Filtros</h2>
-
     <input type="text" id="filtroBusca" placeholder="Buscar por número ou cliente">
-
     <select id="filtroStatus">
       <option value="">Todos</option>
       <option value="em andamento">Em andamento</option>
@@ -29,7 +93,6 @@
       <option value="arquivado">Arquivado</option>
       <option value="pendente">Pendente</option>
     </select>
-
     <button id="btnFiltrar">Filtrar</button>
     <button id="btnLimparFiltros">Limpar</button>
   </section>
@@ -48,7 +111,6 @@
           <th>Ações</th>
         </tr>
       </thead>
-
       <tbody id="corpoTabela"></tbody>
     </table>
   </section>
@@ -57,14 +119,13 @@
 
 <!-- ✏️ MODAL EDITAR -->
 <div id="modalEditar">
-
   <div id="modalEditarContent">
 
     <h3>Editar Processo</h3>
 
     <input id="edit_numero" placeholder="Número processo">
-    <input id="edit_nome" placeholder="Nome cliente">
-    <input id="edit_cpf" placeholder="CPF">
+    <input id="edit_nome"   placeholder="Nome cliente">
+    <input id="edit_cpf"    placeholder="CPF">
 
     <select id="edit_tipo">
       <option value="Cível">Civil</option>
@@ -81,16 +142,87 @@
 
     <input type="date" id="edit_data">
 
+    <!-- ══ ARQUIVOS DO PROCESSO ══ -->
+    <div class="arquivos-section" id="modalArquivos" style="display:none">
+
+      <div>
+        <h4>📷 Fotos</h4>
+        <div class="arquivos-grid" id="modalFotosGrid"></div>
+      </div>
+
+      <div>
+        <h4>📄 Documentos</h4>
+        <div class="arquivos-grid" id="modalDocsGrid"></div>
+      </div>
+
+    </div>
+
     <div class="modal-actions">
       <button onclick="salvarEdicao()">Salvar</button>
       <button onclick="fecharModal()">Cancelar</button>
     </div>
 
   </div>
-
 </div>
 
 <script src="../script.js"></script>
+<script>
+  // URL base do backend para servir os arquivos
+  const BASE_URL = "http://localhost:3000";
+
+  function iconeDoc(nome) {
+    const ext = (nome || "").split(".").pop().toLowerCase();
+    return { pdf:"📕", doc:"📘", docx:"📘", xls:"📗", xlsx:"📗", txt:"📄" }[ext] || "📄";
+  }
+
+  // Chamada após editarProcesso() popular o modal — exibe fotos e docs
+  window.renderArquivosModal = function(fotos, documentos) {
+    const secao    = document.getElementById("modalArquivos");
+    const fotosEl  = document.getElementById("modalFotosGrid");
+    const docsEl   = document.getElementById("modalDocsGrid");
+
+    fotosEl.innerHTML = "";
+    docsEl.innerHTML  = "";
+
+    // Fotos
+    if (fotos && fotos.length) {
+      fotos.forEach(nome => {
+        const url  = BASE_URL + "/uploads/fotos/" + nome;
+        const item = document.createElement("a");
+        item.href     = url;
+        item.download = nome;
+        item.target   = "_blank";
+        item.className = "arquivo-foto";
+        item.title    = nome;
+        item.innerHTML = `<img src="${url}" alt="${nome}">
+                          <div class="overlay">⬇️</div>`;
+        fotosEl.appendChild(item);
+      });
+    } else {
+      fotosEl.innerHTML = '<span class="sem-arquivos">Nenhuma foto</span>';
+    }
+
+    // Documentos
+    if (documentos && documentos.length) {
+      documentos.forEach(nome => {
+        const url  = BASE_URL + "/uploads/documentos/" + nome;
+        const item = document.createElement("a");
+        item.href      = url;
+        item.download  = nome;
+        item.target    = "_blank";
+        item.className = "arquivo-doc";
+        item.innerHTML = `<span class="doc-icon">${iconeDoc(nome)}</span>
+                          <span class="doc-name" title="${nome}">${nome}</span>
+                          <span>⬇️</span>`;
+        docsEl.appendChild(item);
+      });
+    } else {
+      docsEl.innerHTML = '<span class="sem-arquivos">Nenhum documento</span>';
+    }
+
+    secao.style.display = "block";
+  };
+</script>
 
 </body>
 </html>

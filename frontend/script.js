@@ -121,7 +121,6 @@ function renderizarProcessos(lista) {
   }
 
   tbody.innerHTML = lista.map(p => {
-    // ✅ FIX: normaliza o ID independente do nome do campo
     const id = p.id_processo ?? p.id ?? p.processo_id;
     return `
       <tr>
@@ -133,6 +132,7 @@ function renderizarProcessos(lista) {
         <td>${(p.data_protocolo || "").split("T")[0]}</td>
         <td>
           <button onclick="editarProcesso(${id})">Editar</button>
+          <button class="btn-excluir" onclick="excluirProcesso(${id})">Excluir</button>
         </td>
       </tr>
     `;
@@ -181,27 +181,41 @@ document.getElementById("processoForm")?.addEventListener("submit", async (e) =>
   const usuario = JSON.parse(localStorage.getItem("usuario"));
   const token = localStorage.getItem("token");
 
-  const payload = {
-    numero_processo: document.getElementById("numero_processo").value,
-    nome_cliente: document.getElementById("nome_cliente").value,
-    cpf_cliente: document.getElementById("cpf_cliente").value,
-    tipo_acao: document.getElementById("tipo_acao").value,
-    status_processo: document.getElementById("status_processo").value,
-    data_protocolo: document.getElementById("data_protocolo").value,
-    descricao: document.getElementById("descricao").value,
-    adv_id: usuario?.id
-  };
+  // ✅ Usa FormData para suportar arquivos (fotos + documentos)
+  const formData = new FormData();
+  formData.append("numero_processo", document.getElementById("numero_processo").value);
+  formData.append("nome_cliente",    document.getElementById("nome_cliente").value);
+  formData.append("cpf_cliente",     document.getElementById("cpf_cliente").value);
+  formData.append("tipo_acao",       document.getElementById("tipo_acao").value);
+  formData.append("status_processo", document.getElementById("status_processo").value);
+  formData.append("data_protocolo",  document.getElementById("data_protocolo").value);
+  formData.append("descricao",       document.getElementById("descricao").value);
+  formData.append("adv_id",          usuario?.id ?? "");
 
+  // Anexa fotos e documentos se a função estiver disponível (página de controle)
+  if (typeof window.getArquivosSelecionados === "function") {
+    const { fotos, documentos } = window.getArquivosSelecionados();
+    fotos.forEach(f       => formData.append("fotos", f));
+    documentos.forEach(d  => formData.append("documentos", d));
+  }
+
+  // ⚠️ Não definir Content-Type manualmente — o browser seta o boundary do multipart
   const res = await fetch("http://localhost:3000/processos", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify(payload)
+    body: formData
   });
 
-  const data = await res.json();
+  // ✅ Trata resposta não-JSON (ex: erro 500 retornando HTML)
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    alert(`Erro no servidor (${res.status}). Verifique o backend.`);
+    return;
+  }
 
   alert(data.message);
 
@@ -215,7 +229,6 @@ document.getElementById("processoForm")?.addEventListener("submit", async (e) =>
 // ✏️ EDITAR PROCESSO
 //////////////////////////////
 function editarProcesso(id) {
-  // ✅ FIX: usa == ao invés de === para evitar falha por tipo (string vs number)
   const p = processosCache.find(x =>
     x.id == id || x.id_processo == id || x.processo_id == id
   );
@@ -228,11 +241,18 @@ function editarProcesso(id) {
   idEditando = id;
 
   document.getElementById("edit_numero").value = p.numero_processo || "";
-  document.getElementById("edit_nome").value = p.nome_cliente || "";
-  document.getElementById("edit_cpf").value = p.cpf_cliente || "";
-  document.getElementById("edit_tipo").value = p.tipo_acao || "";
+  document.getElementById("edit_nome").value   = p.nome_cliente    || "";
+  document.getElementById("edit_cpf").value    = p.cpf_cliente     || "";
+  document.getElementById("edit_tipo").value   = p.tipo_acao       || "";
   document.getElementById("edit_status").value = p.status_processo || "";
-  document.getElementById("edit_data").value = (p.data_protocolo || "").split("T")[0];
+  document.getElementById("edit_data").value   = (p.data_protocolo || "").split("T")[0];
+
+  // Renderiza fotos e documentos no modal (listagens.html)
+  if (typeof window.renderArquivosModal === "function") {
+    const fotos = typeof p.fotos === "string" ? JSON.parse(p.fotos || "[]") : (p.fotos || []);
+    const docs  = typeof p.documentos === "string" ? JSON.parse(p.documentos || "[]") : (p.documentos || []);
+    window.renderArquivosModal(fotos, docs);
+  }
 
   document.getElementById("modalEditar").style.display = "flex";
 }
@@ -277,6 +297,33 @@ async function salvarEdicao() {
 function fecharModal() {
   document.getElementById("modalEditar").style.display = "none";
   idEditando = null;
+}
+
+//////////////////////////////
+// 🗑️ EXCLUIR PROCESSO
+//////////////////////////////
+async function excluirProcesso(id) {
+  if (!confirm("Tem certeza que deseja excluir este processo? Esta ação não pode ser desfeita.")) return;
+
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch(`http://localhost:3000/processos/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    let data;
+    try { data = await res.json(); } catch { data = { message: "Erro inesperado" }; }
+
+    alert(data.message);
+
+    if (res.ok) carregarProcessos();
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao excluir processo");
+  }
 }
 
 //////////////////////////////
