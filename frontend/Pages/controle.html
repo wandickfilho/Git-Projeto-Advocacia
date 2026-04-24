@@ -5,86 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Controle de Processos</title>
   <link rel="stylesheet" href="../style.css" />
-  <style>
-    /* ── Zonas de upload ── */
-    .upload-zone {
-      border: 2px dashed #aaa;
-      border-radius: 8px;
-      padding: 1.2rem 1rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      background: #fafafa;
-      position: relative;
-    }
-    .upload-zone:hover,
-    .upload-zone.dragover {
-      border-color: #4a90e2;
-      background: #f0f6ff;
-    }
-    .upload-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-    .upload-zone .upload-icon { font-size: 2rem; display: block; margin-bottom: 0.4rem; }
-    .upload-zone p  { margin: 0; font-size: 0.85rem; color: #666; }
-    .upload-zone small { color: #aaa; font-size: 0.75rem; }
-
-    /* ── Previews ── */
-    .preview-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      margin-top: 0.75rem;
-    }
-    .preview-item {
-      position: relative;
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid #ddd;
-    }
-    .preview-item.foto { width: 80px; height: 80px; }
-    .preview-item.foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-    .preview-item.doc {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.4rem 0.6rem;
-      background: #f4f4f4;
-      max-width: 220px;
-    }
-    .preview-item.doc .doc-icon { font-size: 1.4rem; flex-shrink: 0; }
-    .preview-item.doc .doc-name {
-      font-size: 0.72rem; color: #444;
-      white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; max-width: 130px;
-    }
-
-    /* ── Botão remover ── */
-    .btn-remover {
-      position: absolute;
-      top: 2px; right: 2px;
-      background: rgba(200,40,40,0.85);
-      color: #fff; border: none;
-      border-radius: 50%;
-      width: 18px; height: 18px;
-      font-size: 0.6rem; line-height: 18px;
-      text-align: center; cursor: pointer; padding: 0;
-    }
-    .preview-item.doc .btn-remover {
-      position: static;
-      border-radius: 4px;
-      width: auto; height: auto;
-      padding: 2px 5px;
-    }
-
-    .upload-count { font-size: 0.75rem; color: #4a90e2; margin-top: 0.3rem; display: block; }
-  </style>
+  <link rel="stylesheet" href="./controle.css" />
 </head>
 
 <body>
@@ -188,7 +109,7 @@
        BOTÕES (RESTAURADOS)
   ========================== -->
   <div class="links-navegacao">
-    <a href="../Pages/listagens.html" class="button-Listens">Listagens</a>
+    <a href="../Pages/Listagens.html" class="button-Listens">Listagens</a>
   </div>
 
 </main>

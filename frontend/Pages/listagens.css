@@ -1,0 +1,153 @@
+/* Botoes de acao */
+.btn-excluir {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  margin-left: 6px;
+  box-shadow: 0 8px 14px rgba(220, 38, 38, 0.25);
+}
+
+.btn-excluir:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.acoes-filtro {
+  display: flex;
+  gap: 10px;
+}
+
+/* Secao de arquivos no modal */
+.arquivos-section {
+  margin-top: 1rem;
+}
+
+.arquivos-section h4 {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.arquivos-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Thumbnail foto */
+.arquivo-foto {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.arquivo-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.arquivo-foto .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 1.3rem;
+}
+
+.arquivo-foto:hover .overlay {
+  opacity: 1;
+}
+
+/* Item documento */
+.arquivo-doc {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  background: #f4f4f4;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  text-decoration: none;
+  color: #333;
+  font-size: 0.78rem;
+  transition: background 0.2s;
+}
+
+.arquivo-doc:hover {
+  background: #e8f0fe;
+}
+
+.arquivo-doc .doc-icon {
+  font-size: 1.3rem;
+}
+
+.arquivo-doc .doc-name {
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sem-arquivos {
+  font-size: 0.78rem;
+  color: #aaa;
+  font-style: italic;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.status-andamento {
+  color: #1e40af;
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.status-concluido {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.status-arquivado {
+  color: #475569;
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.status-pendente {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.status-default {
+  color: #374151;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.is-hidden {
+  display: none;
+}

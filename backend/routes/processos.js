@@ -37,8 +37,13 @@ router.post("/", auth, uploadCampos, (req, res) => {
   const {
     numero_processo, nome_cliente, cpf_cliente,
     tipo_acao, status_processo, data_protocolo,
-    descricao, adv_id
+    descricao
   } = req.body;
+  const adv_id = req.user?.id;
+
+  if (!adv_id) {
+    return res.status(401).json({ message: "Usuário não autenticado" });
+  }
 
   const fotos      = JSON.stringify((req.files?.fotos      || []).map(f => f.filename));
   const documentos = JSON.stringify((req.files?.documentos || []).map(f => f.filename));
@@ -51,6 +56,9 @@ router.post("/", auth, uploadCampos, (req, res) => {
     (err) => {
       if (err) {
         console.error("ERRO SQL:", err);
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.status(409).json({ message: "Numero de processo ja cadastrado" });
+        }
         return res.status(500).json({ message: "Erro ao criar processo" });
       }
       res.status(201).json({ message: "Processo criado com sucesso" });
@@ -62,8 +70,10 @@ router.post("/", auth, uploadCampos, (req, res) => {
 // 📌 LISTAR PROCESSOS
 //////////////////////////////
 router.get("/", auth, (req, res) => {
+  const advId = req.user?.id;
   db.query(
-    `SELECT * FROM processos ORDER BY id_processo DESC`,
+    `SELECT * FROM processos WHERE adv_id = ? ORDER BY id_processo DESC`,
+    [advId],
     (err, results) => {
       if (err) {
         console.error("ERRO SQL:", err);
@@ -79,6 +89,7 @@ router.get("/", auth, (req, res) => {
 //////////////////////////////
 router.put("/:id", auth, (req, res) => {
   const { id } = req.params;
+  const advId = req.user?.id;
   const {
     numero_processo, nome_cliente, cpf_cliente,
     tipo_acao, status_processo, data_protocolo
@@ -88,8 +99,8 @@ router.put("/:id", auth, (req, res) => {
     `UPDATE processos SET
       numero_processo = ?, nome_cliente = ?, cpf_cliente = ?,
       tipo_acao = ?, status_processo = ?, data_protocolo = ?
-     WHERE id_processo = ?`,
-    [numero_processo, nome_cliente, cpf_cliente, tipo_acao, status_processo, data_protocolo, id],
+     WHERE id_processo = ? AND adv_id = ?`,
+    [numero_processo, nome_cliente, cpf_cliente, tipo_acao, status_processo, data_protocolo, id, advId],
     (err, result) => {
       if (err) {
         console.error("ERRO SQL UPDATE:", err);
@@ -108,11 +119,12 @@ router.put("/:id", auth, (req, res) => {
 //////////////////////////////
 router.delete("/:id", auth, (req, res) => {
   const { id } = req.params;
+  const advId = req.user?.id;
 
   // Busca os arquivos antes de deletar para removê-los do disco
   db.query(
-    `SELECT fotos, documentos FROM processos WHERE id_processo = ?`,
-    [id],
+    `SELECT fotos, documentos FROM processos WHERE id_processo = ? AND adv_id = ?`,
+    [id, advId],
     (err, rows) => {
       if (err || !rows.length) {
         return res.status(404).json({ message: "Processo não encontrado" });
@@ -127,8 +139,8 @@ router.delete("/:id", auth, (req, res) => {
 
       // Deleta do banco
       db.query(
-        `DELETE FROM processos WHERE id_processo = ?`,
-        [id],
+        `DELETE FROM processos WHERE id_processo = ? AND adv_id = ?`,
+        [id, advId],
         (err2) => {
           if (err2) {
             console.error("ERRO SQL DELETE:", err2);
