@@ -2,7 +2,7 @@
 // 🔐 PROTEÇÃO DE ROTAS
 //////////////////////////////
 (() => {
-  const path = window.location.pathname;
+  const path = window.location.pathname.toLowerCase();
   const token = localStorage.getItem("token");
 
   const isPrivate = ["controle.html", "listagens.html"].some(p =>
@@ -20,6 +20,84 @@
 let processosCache = [];
 let idEditando = null;
 
+function normalizarTexto(valor) {
+  return (valor || "").toString().trim().toLowerCase();
+}
+
+function statusClass(status) {
+  const key = normalizarTexto(status);
+  if (key === "em andamento") return "status-andamento";
+  if (key === "concluído" || key === "concluido") return "status-concluido";
+  if (key === "arquivado") return "status-arquivado";
+  if (key === "pendente") return "status-pendente";
+  return "status-default";
+}
+
+function ensureDialogRoot() {
+  let root = document.getElementById("customDialogRoot");
+  if (root) return root;
+
+  root = document.createElement("div");
+  root.id = "customDialogRoot";
+  root.className = "custom-dialog-root is-hidden";
+  root.innerHTML = `
+    <div class="custom-dialog-overlay"></div>
+    <div class="custom-dialog-box" role="dialog" aria-modal="true" aria-live="polite">
+      <h3 class="custom-dialog-title"></h3>
+      <p class="custom-dialog-message"></p>
+      <div class="custom-dialog-actions"></div>
+    </div>
+  `;
+  document.body.appendChild(root);
+  return root;
+}
+
+function abrirDialogo({ title, message, buttons }) {
+  return new Promise((resolve) => {
+    const root = ensureDialogRoot();
+    const titleEl = root.querySelector(".custom-dialog-title");
+    const messageEl = root.querySelector(".custom-dialog-message");
+    const actionsEl = root.querySelector(".custom-dialog-actions");
+
+    titleEl.textContent = title || "Aviso";
+    messageEl.textContent = message || "";
+    actionsEl.innerHTML = "";
+
+    buttons.forEach((btn) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.textContent = btn.label;
+      el.className = `custom-dialog-btn ${btn.variant || "primary"}`;
+      el.addEventListener("click", () => {
+        root.classList.add("is-hidden");
+        resolve(btn.value);
+      });
+      actionsEl.appendChild(el);
+    });
+
+    root.classList.remove("is-hidden");
+  });
+}
+
+function notify(message, title = "Aviso") {
+  return abrirDialogo({
+    title,
+    message,
+    buttons: [{ label: "OK", value: true, variant: "primary" }]
+  });
+}
+
+function askConfirm(message, title = "Confirmar") {
+  return abrirDialogo({
+    title,
+    message,
+    buttons: [
+      { label: "Cancelar", value: false, variant: "ghost" },
+      { label: "Confirmar", value: true, variant: "danger" }
+    ]
+  });
+}
+
 //////////////////////////////
 // 🔑 LOGIN
 //////////////////////////////
@@ -35,11 +113,17 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, senha })
     });
-
-    const data = await res.json();
+    let data = null;
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(text || "Resposta invalida do servidor");
+    }
 
     if (!res.ok) {
-      alert(data.message);
+      notify(data?.message || `Falha no login (HTTP ${res.status})`, "Login");
       return;
     }
 
@@ -50,7 +134,7 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
 
   } catch (err) {
     console.error(err);
-    alert("Erro ao conectar");
+    notify("Nao foi possivel conectar no backend em http://localhost:3000. Inicie o servidor e tente novamente.", "Login");
   }
 });
 
@@ -71,9 +155,16 @@ document.getElementById("registerForm")?.addEventListener("submit", async (e) =>
       body: JSON.stringify({ nome, email, senha })
     });
 
-    const data = await res.json();
+    let data = null;
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error(text || "Resposta invalida do servidor");
+    }
 
-    alert(data.message);
+    notify(data?.message || "Falha ao cadastrar", "Cadastro");
 
     if (res.ok) {
       window.location.href = "../index.html";
@@ -81,7 +172,7 @@ document.getElementById("registerForm")?.addEventListener("submit", async (e) =>
 
   } catch (err) {
     console.error(err);
-    alert("Erro ao cadastrar");
+    notify("Nao foi possivel conectar no backend para cadastrar.", "Cadastro");
   }
 });
 
@@ -90,22 +181,35 @@ document.getElementById("registerForm")?.addEventListener("submit", async (e) =>
 //////////////////////////////
 async function carregarProcessos() {
   const token = localStorage.getItem("token");
+  try {
+    const res = await fetch("http://localhost:3000/processos", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
-  const res = await fetch("http://localhost:3000/processos", {
-    headers: {
-      Authorization: `Bearer ${token}`
+    const contentType = res.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await res.json()
+      : [];
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "../index.html";
+        return;
+      }
+      notify(data?.message || "Erro ao carregar processos", "Processos");
+      return;
     }
-  });
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    console.log("Erro ao carregar processos");
-    return;
+    processosCache = Array.isArray(data) ? data : [];
+    renderizarProcessos(processosCache);
+  } catch (err) {
+    console.error(err);
+    notify("Falha ao buscar processos. Verifique se o backend esta ligado.", "Processos");
   }
-
-  processosCache = data;
-  renderizarProcessos(data);
 }
 
 //////////////////////////////
@@ -122,13 +226,14 @@ function renderizarProcessos(lista) {
 
   tbody.innerHTML = lista.map(p => {
     const id = p.id_processo ?? p.id ?? p.processo_id;
+    const status = p.status_processo || "Nao informado";
     return `
       <tr>
         <td>${p.numero_processo}</td>
         <td>${p.nome_cliente}</td>
         <td>${p.cpf_cliente}</td>
         <td>${p.tipo_acao}</td>
-        <td>${p.status_processo}</td>
+        <td><span class="status-badge ${statusClass(status)}">${status}</span></td>
         <td>${(p.data_protocolo || "").split("T")[0]}</td>
         <td>
           <button onclick="editarProcesso(${id})">Editar</button>
@@ -150,13 +255,16 @@ if (document.getElementById("corpoTabela")) {
 // 🔍 FILTRO
 //////////////////////////////
 document.getElementById("btnFiltrar")?.addEventListener("click", () => {
-  const busca = document.getElementById("filtroBusca").value.toLowerCase();
-  const status = document.getElementById("filtroStatus").value.toLowerCase();
+  const busca = normalizarTexto(document.getElementById("filtroBusca").value);
+  const status = normalizarTexto(document.getElementById("filtroStatus").value);
 
   const filtrados = processosCache.filter(p => {
+    const nome = normalizarTexto(p.nome_cliente);
+    const numero = normalizarTexto(p.numero_processo);
+    const statusProcesso = normalizarTexto(p.status_processo);
     return (
-      (!busca || p.nome_cliente.toLowerCase().includes(busca) || p.numero_processo.toLowerCase().includes(busca)) &&
-      (!status || p.status_processo.toLowerCase() === status)
+      (!busca || nome.includes(busca) || numero.includes(busca)) &&
+      (!status || statusProcesso === status)
     );
   });
 
@@ -180,6 +288,11 @@ document.getElementById("processoForm")?.addEventListener("submit", async (e) =>
 
   const usuario = JSON.parse(localStorage.getItem("usuario"));
   const token = localStorage.getItem("token");
+  if (!token || !usuario?.id) {
+    notify("Sua sessao expirou. Faca login novamente.", "Sessao");
+    window.location.href = "../index.html";
+    return;
+  }
 
   // ✅ Usa FormData para suportar arquivos (fotos + documentos)
   const formData = new FormData();
@@ -200,28 +313,32 @@ document.getElementById("processoForm")?.addEventListener("submit", async (e) =>
   }
 
   // ⚠️ Não definir Content-Type manualmente — o browser seta o boundary do multipart
-  const res = await fetch("http://localhost:3000/processos", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    body: formData
-  });
-
-  // ✅ Trata resposta não-JSON (ex: erro 500 retornando HTML)
-  let data;
   try {
-    data = await res.json();
-  } catch {
-    alert(`Erro no servidor (${res.status}). Verifique o backend.`);
-    return;
-  }
+    const res = await fetch("http://localhost:3000/processos", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    });
 
-  alert(data.message);
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      notify(`Erro no servidor (${res.status}). Verifique o backend.`, "Processos");
+      return;
+    }
 
-  if (res.ok) {
-    e.target.reset();
-    carregarProcessos();
+    notify(data.message, "Processos");
+
+    if (res.ok) {
+      e.target.reset();
+      carregarProcessos();
+    }
+  } catch (err) {
+    console.error(err);
+    notify("Nao foi possivel salvar o processo.", "Processos");
   }
 });
 
@@ -254,7 +371,7 @@ function editarProcesso(id) {
     window.renderArquivosModal(fotos, docs);
   }
 
-  document.getElementById("modalEditar").style.display = "flex";
+  document.getElementById("modalEditar").classList.add("active");
 }
 
 //////////////////////////////
@@ -262,7 +379,7 @@ function editarProcesso(id) {
 //////////////////////////////
 async function salvarEdicao() {
   if (!idEditando) {
-    alert("Nenhum processo selecionado para editar.");
+    notify("Nenhum processo selecionado para editar.", "Edicao");
     return;
   }
 
@@ -277,25 +394,31 @@ async function salvarEdicao() {
     data_protocolo: document.getElementById("edit_data").value
   };
 
-  const res = await fetch(`http://localhost:3000/processos/${idEditando}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const res = await fetch(`http://localhost:3000/processos/${idEditando}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
 
-  const data = await res.json();
+    const data = await res.json();
+    notify(data.message, "Edicao");
 
-  alert(data.message);
-
-  fecharModal();
-  carregarProcessos();
+    if (res.ok) {
+      fecharModal();
+      carregarProcessos();
+    }
+  } catch (err) {
+    console.error(err);
+    notify("Nao foi possivel salvar a edicao.", "Edicao");
+  }
 }
 
 function fecharModal() {
-  document.getElementById("modalEditar").style.display = "none";
+  document.getElementById("modalEditar").classList.remove("active");
   idEditando = null;
 }
 
@@ -303,7 +426,11 @@ function fecharModal() {
 // 🗑️ EXCLUIR PROCESSO
 //////////////////////////////
 async function excluirProcesso(id) {
-  if (!confirm("Tem certeza que deseja excluir este processo? Esta ação não pode ser desfeita.")) return;
+  const confirmou = await askConfirm(
+    "Tem certeza que deseja excluir este processo? Esta acao nao pode ser desfeita.",
+    "Excluir processo"
+  );
+  if (!confirmou) return;
 
   const token = localStorage.getItem("token");
 
@@ -316,13 +443,13 @@ async function excluirProcesso(id) {
     let data;
     try { data = await res.json(); } catch { data = { message: "Erro inesperado" }; }
 
-    alert(data.message);
+    notify(data.message, "Exclusao");
 
     if (res.ok) carregarProcessos();
 
   } catch (err) {
     console.error(err);
-    alert("Erro ao excluir processo");
+    notify("Erro ao excluir processo", "Exclusao");
   }
 }
 
